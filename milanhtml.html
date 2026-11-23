@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harborline | Port Container Management</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6f5;color:#183440;font:14px Arial,Helvetica,sans-serif}
+.shell{min-height:100vh;display:grid;grid-template-columns:230px 1fr}
+.shell>input{position:absolute;opacity:0;pointer-events:none}
+.sidebar{background:#0b202c;color:#dce7e8;padding:22px 15px;min-height:100vh}
+.brand{font-weight:bold;font-size:17px;color:white;padding:3px 9px 25px}
+.brand small{display:block;color:#80aaa5;font-size:10px;letter-spacing:2px;font-weight:normal}
+.nav-title{padding:8px 12px;color:#82969b;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
+.nav label{display:block;padding:11px 12px;margin:3px 0;border-radius:7px;color:#bdcccf;font-size:13px;cursor:pointer}
+.nav label:hover{background:#ffffff18;color:white}
+.sidebar-note{margin:35px 4px 0;padding:13px;background:#ffffff10;border-radius:8px;color:#b9c8cb;font-size:11px;line-height:1.7}
+.sidebar-note b{color:white}
+.main{min-width:0}
+.top{height:62px;background:#fff;border-bottom:1px solid #e2e9e6;display:flex;align-items:center;justify-content:space-between;padding:0 32px;color:#73858a;font-size:12px}
+.top strong{color:#183440}
+.content{max-width:1250px;margin:auto;padding:30px 32px 50px}
+.view{display:none}
+.view h1{font-size:27px;margin:4px 0;color:#12313e}
+.view h2{font-size:16px;margin:0;color:#173844}
+.sub{color:#788a8f;font-size:12px;margin:4px 0 20px}
+.kicker{color:#167c78;text-transform:uppercase;letter-spacing:1.4px;font-size:10px;font-weight:bold}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.badge{background:#e4f3ee;color:#267862;border-radius:20px;padding:7px 11px;font-size:10px;font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:18px 0}
+.card,.panel{background:#fff;border:1px solid #e2e9e6;border-radius:10px;padding:16px;box-shadow:0 7px 22px #16354609}
+.card small{font-size:11px;color:#7b8d91}
+.value{font-size:25px;font-weight:bold;margin:4px 0;color:#153642}
+.green{color:#33856e;font-size:10px}
+.columns{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.panel{margin-bottom:14px}
+.panel h2{margin-bottom:6px}
+.muted{font-size:11px;color:#788a8f}
+.bar{height:9px;border-radius:9px;background:#e1eae6;margin:14px 0}
+.bar span{display:block;width:68%;height:100%;background:#167c78;border-radius:9px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf1ef;font-size:11px;color:#50666d}
+.row:last-child{border:0}
+.row b{color:#244b57}
+table{border-collapse:collapse;width:100%;text-align:left}
+th,td{padding:11px 10px;border-bottom:1px solid #edf1ef;font-size:11px}
+th{background:#f8faf9;color:#89999d;font-size:9px;text-transform:uppercase;letter-spacing:.7px}
+td{color:#50666d}
+.id{font-weight:bold;color:#244b57}
+.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:9px;font-weight:bold;background:#e7f4ed;color:#318267}
+.gold{background:#fbf2e3;color:#a06c23}
+.blue{background:#eef2fa;color:#5577a2}
+.red{background:#fbefed;color:#ad5e53}
+.yard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.slot{background:#e6f3ee;border:1px solid #d0e7dd;border-radius:6px;text-align:center;padding:13px 4px;color:#277761;font-size:10px}
+.occupied{background:#dce9ed;border-color:#c9dce1;color:#426571}
+.inspection{background:#faeee5;border-color:#f0ddcd;color:#a46b2a}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.step{border-left:3px solid #167c78;background:#f8faf9;padding:12px;border-radius:4px}
+.step b{font-size:11px}
+.step p{font-size:10px;color:#75878b;line-height:1.6}
+.chart{height:180px;display:flex;align-items:end;gap:14px;padding:15px 10px 25px;border-bottom:1px solid #dfe8e4}
+.barcol{flex:1;background:#287e78;border-radius:5px 5px 0 0;position:relative;min-width:12px}
+.barcol:nth-child(odd){background:#84b7a5}
+.barcol small{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:9px;color:#788b8f}
+.info{max-width:760px;font-size:12px;color:#63777d;line-height:1.8}
+.footer{text-align:center;color:#93a1a3;font-size:10px;padding:20px}
+#tab-overview:checked~main .overview,
+#tab-containers:checked~main .containers,
+#tab-vessels:checked~main .vessels,
+#tab-yard:checked~main .yard-view,
+#tab-arrivals:checked~main .arrivals,
+#tab-movements:checked~main .movements,
+#tab-reports:checked~main .reports,
+#tab-about:checked~main .about{display:block}
+#tab-overview:checked~aside label[for=tab-overview],
+#tab-containers:checked~aside label[for=tab-containers],
+#tab-vessels:checked~aside label[for=tab-vessels],
+#tab-yard:checked~aside label[for=tab-yard],
+#tab-arrivals:checked~aside label[for=tab-arrivals],
+#tab-movements:checked~aside label[for=tab-movements],
+#tab-reports:checked~aside label[for=tab-reports],
+#tab-about:checked~aside label[for=tab-about]{
+  background:#ffffff18;color:white;box-shadow:inset 3px 0 #55bbb0
+}
+@media(max-width:850px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{min-height:auto;padding:12px}
+  .brand{padding:2px 8px 10px}
+  .nav{display:flex;overflow-x:auto}
+  .nav label{white-space:nowrap}
+  .nav-title,.sidebar-note{display:none}
+  .content{padding:22px 15px}
+  .top{padding:0 15px}
+  .columns{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .stats{grid-template-columns:1fr 1fr}
+  .view h1{font-size:23px}
+  .head{align-items:flex-start;gap:10px;flex-direction:column}
+  .panel{overflow-x:auto}
+  .yard{grid-template-columns:repeat(3,1fr)}
+  .steps{grid-template-columns:1fr 1fr}
+  table{min-width:570px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<input type="radio" name="page" id="tab-overview" checked>
+<input type="radio" name="page" id="tab-containers">
+<input type="radio" name="page" id="tab-vessels">
+<input type="radio" name="page" id="tab-yard">
+<input type="radio" name="page" id="tab-arrivals">
+<input type="radio" name="page" id="tab-movements">
+<input type="radio" name="page" id="tab-reports">
+<input type="radio" name="page" id="tab-about">
+
+<aside class="sidebar">
+  <div class="brand">⚓ HARBORLINE<small>PORT OPERATIONS</small></div>
+  <div class="nav-title">Project interfaces</div>
+  <nav class="nav">
+    <label for="tab-overview">01 · Overview</label>
+    <label for="tab-containers">02 · Containers</label>
+    <label for="tab-vessels">03 · Vessels</label>
+    <label for="tab-yard">04 · Yard map</label>
+    <label for="tab-arrivals">05 · Arrivals</label>
+    <label for="tab-movements">06 · Movements</label>
+    <label for="tab-reports">07 · Reports</label>
+    <label for="tab-about">08 · About project</label>
+  </nav>
+  <div class="sidebar-note"><b>● Port systems operational</b><br>East Terminal · Berth 04<br>Student project demonstration</div>
+</aside>
+
+<main class="main">
+  <header class="top">
+    <span>Maritime Port Container Management</span>
+    <span><strong>East Terminal</strong> · Demo data</span>
+  </header>
+
+  <div class="content">
+
+    <section class="view overview">
+      <div class="head">
+        <div>
+          <div class="kicker">Student project · Port operations</div>
+          <h1>Harborline Operations</h1>
+          <p class="sub">A simple interface for tracking containers, vessels and yard activity.</p>
+        </div>
+        <span class="badge">OVERVIEW</span>
+      </div>
+      <div class="stats">
+        <div class="card"><small>Containers in yard</small><div class="value">1,284</div><span class="green">Across all yard zones</span></div>
+        <div class="card"><small>Ready for dispatch</small><div class="value">486</div><span class="green">Available containers</span></div>
+        <div class="card"><small>Vessels in port</small><div class="value">12</div><span class="green">Active assignments</span></div>
+        <div class="card"><small>Needs attention</small><div class="value">12</div><span class="gold">Customs or inspection hold</span></div>
+      </div>
+      <div class="columns">
+        <div class="panel">
+          <h2>Yard capacity</h2><p class="muted">East Terminal · 68% occupied</p>
+          <div class="bar"><span></span></div>
+          <p class="muted">1,284 occupied · 604 available · 1,888 TEU maximum</p>
+        </div>
+        <div class="panel">
+          <h2>Latest activity</h2>
+          <div class="row">16:18 · Container dispatched <b>Gate 2</b></div>
+          <div class="row">15:52 · Vessel assignment updated <b>Ocean Crest</b></div>
+          <div class="row">15:24 · Container received <b>Zone B-12</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view containers">
+      <div class="head"><div><div class="kicker">Interface 02</div><h1>Container inventory</h1><p class="sub">Sample container records, vessel assignments and current locations.</p></div><span class="badge">CONTAINERS</span></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Container ID</th><th>Type</th><th>Vessel</th><th>Yard location</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="id">MSCU 782 104-3</td><td>40 ft Standard</td><td>MV Ocean Crest</td><td>Zone A-04</td><td><span class="pill">Available</span></td></tr>
+            <tr><td class="id">MSCU 441 092-8</td><td>20 ft Standard</td><td>MV Ocean Crest</td><td>Berth 04</td><td><span class="pill gold">In transit</span></td></tr>
+            <tr><td class="id">TGHU 608 315-2</td><td>40 ft High cube</td><td>MV Pacific Dawn</td><td>Zone B-12</td><td><span class="pill blue">Loading</span></td></tr>
+            <tr><td class="id">CMAU 219 730-1</td><td>40 ft Refrigerated</td><td>MV Blue Horizon</td><td>Zone C-06</td><td><span class="pill red">On hold</span></td></tr>
+            <tr><td class="id">OOLU 553 816-9</td><td>20 ft Standard</td><td>MV Eastern Star</td><td>Zone A-18</td><td><span class="pill">Available</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view vessels">
+      <div class="head"><div><div class="kicker">Interface 03</div><h1>Vessel schedule</h1><p class="sub">Vessels assigned to the terminal and their current operations.</p></div><span class="badge">VESSELS</span></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Vessel</th><th>Berth</th><th>Arrival</th><th>Containers</th><th>Operation</th></tr></thead>
+          <tbody>
+            <tr><td class="id">MV Ocean Crest</td><td>Berth 04</td><td>Today · 12:30</td><td>248</td><td><span class="pill blue">Unloading</span></td></tr>
+            <tr><td class="id">MV Pacific Dawn</td><td>Berth 02</td><td>Today · 09:15</td><td>186</td><td><span class="pill gold">Loading</span></td></tr>
+            <tr><td class="id">MV Eastern Star</td><td>Berth 06</td><td>Tomorrow · 06:00</td><td>312</td><td><span class="pill">Scheduled</span></td></tr>
+            <tr><td class="id">MV Blue Horizon</td><td>Berth 01</td><td>Tomorrow · 10:45</td><td>127</td><td><span class="pill">Scheduled</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view yard-view">
+      <div class="head"><div><div class="kicker">Interface 04</div><h1>Yard location map</h1><p class="sub">Illustrative block layout showing container stack availability.</p></div><span class="badge">YARD MAP</span></div>
+      <div class="panel">
+        <div class="yard">
+          <div class="slot occupied">A-01<br>Occupied</div><div class="slot">A-02<br>Available</div><div class="slot occupied">A-03<br>Occupied</div><div class="slot inspection">A-04<br>Inspection</div><div class="slot">A-05<br>Available</div><div class="slot occupied">A-06<br>Occupied</div>
+          <div class="slot">B-01<br>Available</div><div class="slot occupied">B-02<br>Occupied</div><div class="slot occupied">B-03<br>Occupied</div><div class="slot">B-04<br>Available</div><div class="slot inspection">B-05<br>Inspection</div><div class="slot occupied">B-06<br>Occupied</div>
+          <div class="slot occupied">C-01<br>Occupied</div><div class="slot">C-02<br>Available</div><div class="slot occupied">C-03<br>Occupied</div><div class="slot occupied">C-04<br>Occupied</div><div class="slot">C-05<br>Available</div><div class="slot occupied">C-06<br>Occupied</div>
+        </div>
+        <p class="muted">Green: available · Blue: occupied · Amber: inspection hold</p>
+      </div>
+      <div class="columns">
+        <div class="card"><h2>Zone A</h2><p class="muted">18 of 24 bays occupied</p></div>
+        <div class="card"><h2>Zone B</h2><p class="muted">21 of 28 bays occupied</p></div>
+      </div>
+    </section>
+
+    <section class="view arrivals">
+      <div class="head"><div><div class="kicker">Interface 05</div><h1>Expected arrivals</h1><p class="sub">Upcoming vessel calls and planned cargo at the port.</p></div><span class="badge">ARRIVALS</span></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Expected</th><th>Vessel</th><th>Berth</th><th>Containers</th><th>Arrival status</th></tr></thead>
+          <tbody>
+            <tr><td>Today · 20:45</td><td class="id">MV Northern Light</td><td>Berth 03</td><td>154</td><td><span class="pill gold">Approaching</span></td></tr>
+            <tr><td>Tomorrow · 06:00</td><td class="id">MV Eastern Star</td><td>Berth 06</td><td>312</td><td><span class="pill">Scheduled</span></td></tr>
+            <tr><td>Tomorrow · 14:30</td><td class="id">MV Coral Bay</td><td>Berth 01</td><td>98</td><td><span class="pill">Scheduled</span></td></tr>
+            <tr><td>Nov 16 · 08:00</td><td class="id">MV Silver Tide</td><td>Berth 05</td><td>203</td><td><span class="pill">Scheduled</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view movements">
+      <div class="head"><div><div class="kicker">Interface 06</div><h1>Movement history</h1><p class="sub">Recent container handling events recorded at the terminal.</p></div><span class="badge">MOVEMENTS</span></div>
+      <div class="steps">
+        <div class="step"><b>Gate-in · Container received</b><p>TGHU 608 315-2 · Zone B-12<br>Today, 15:24</p></div>
+        <div class="step"><b>Yard transfer</b><p>OOLU 553 816-9 · A-12 to A-18<br>Today, 14:48</p></div>
+        <div class="step"><b>Vessel loading</b><p>MSCU 441 092-8 · MV Ocean Crest<br>Today, 13:52</p></div>
+        <div class="step"><b>Gate-out · Dispatched</b><p>MSCU 782 104-3 · Gate 2<br>Today, 16:18</p></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Movement details</h2>
+        <div class="row"><b>Container</b><span>MSCU 782 104-3</span></div>
+        <div class="row"><b>Movement type</b><span>Gate-out / Dispatch</span></div>
+        <div class="row"><b>Destination</b><span>Gate 2 collection point</span></div>
+      </div>
+    </section>
+
+    <section class="view reports">
+      <div class="head"><div><div class="kicker">Interface 07</div><h1>Operations reports</h1><p class="sub">Illustrative container activity over the working week.</p></div><span class="badge">REPORTS</span></div>
+      <div class="columns">
+        <div class="panel">
+          <h2>Containers handled</h2>
+          <div class="chart">
+            <div class="barcol" style="height:50%"><small>Mon</small></div>
+            <div class="barcol" style="height:75%"><small>Tue</small></div>
+            <div class="barcol" style="height:60%"><small>Wed</small></div>
+            <div class="barcol" style="height:88%"><small>Thu</small></div>
+            <div class="barcol" style="height:68%"><small>Fri</small></div>
+            <div class="barcol" style="height:42%"><small>Sat</small></div>
+            <div class="barcol" style="height:30%"><small>Sun</small></div>
+          </div>
+          <p class="muted">Sample illustration; values are demonstration data.</p>
+        </div>
+        <div class="panel">
+          <h2>Weekly summary</h2>
+          <div class="row"><span>Containers received</span><b>842</b></div>
+          <div class="row"><span>Containers dispatched</span><b>716</b></div>
+          <div class="row"><span>Vessel calls</span><b>18</b></div>
+          <div class="row"><span>Average yard use</span><b>68%</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view about">
+      <div class="head"><div><div class="kicker">Interface 08</div><h1>About this project</h1><p class="sub">Maritime Port Container Management</p></div><span class="badge">PROJECT INFO</span></div>
+      <div class="panel info">
+        <p>This student project demonstrates how a simplified port operations website can organize container records, vessel assignments, yard locations, availability and container movement history.</p>
+        <p>The eight screens are built using HTML and CSS. Click the menu on the left to switch between screens. All records and figures shown are sample data for demonstration only.</p>
+        <p>This version is a static front-end project. It does not store changes or connect to a live port system.</p>
+        <h2>Project goals</h2>
+        <ul>
+          <li>Organize container information in a clear table.</li>
+          <li>Show vessel assignments and expected arrivals.</li>
+          <li>Display yard locations and recent container movements.</li>
+          <li>Present a simple operational summary.</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="footer">Harborline · Maritime Port Container Management · Student project prototype</div>
+  </div>
+</main>
+</div>
+</body>
+</html>
